@@ -48,9 +48,9 @@ jobs:
           --targets "Key=instanceids,Values=i-01c5e4a0c5bafdd05,i-02b8566c525cb3b02" \
           --comment "Pull Docker image and run it" \
           --parameters 'commands=[
-            "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 471112619481.dkr.ecr.us-east-1.amazonaws.com",
-            "docker pull 471112619481.dkr.ecr.us-east-1.amazonaws.com/cwc-ecr:latest",
-            "docker run --rm -p 3000:3000 471112619481.dkr.ecr.us-east-1.amazonaws.com/cwc-ecr:latest"
+            "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{steps.login-aws-ecr.outputs.registry}}",
+            "docker pull ${{steps.login-aws-ecr.outputs.registry }}/{{secrets.AWS_ECR_REPO}}:latest",
+            "docker run --rm -p --name api 3000:3000 ${{steps.login-aws-ecr.outputs.registry }}/{{secrets.AWS_ECR_REPO}}:latest"
           ]' --query "Command.CommandId" --output text)
 
           echo "$command_id"
@@ -66,8 +66,7 @@ jobs:
           if [ $status == "Success" ]; then 
             echo "Command executed successfully"
           else
-            echo "Command failed"
-            echo "Error: "$status"
+            echo "Command failed time to get debugging"
             exit 1
           fi
 
