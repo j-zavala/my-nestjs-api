@@ -51,20 +51,6 @@ jobs:
             "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 471112619481.dkr.ecr.us-east-1.amazonaws.com",
             "docker pull 471112619481.dkr.ecr.us-east-1.amazonaws.com/cwc-ecr:latest",
             "docker run --rm -p 3000:3000 471112619481.dkr.ecr.us-east-1.amazonaws.com/cwc-ecr:latest"
-          ]' \
-          --query "Command.CommandId" \
-          --output text)
-
-        aws ssm wait command-executed \
-          --command-id $command_id \
-          --targets "Key=instanceids,Values=i-01c5e4a0c5bafdd05,i-02b8566c525cb3b02"
-
-        
-        status=$(aws ssm list-commands --command-id $command_id --query "Commands[0].StatusDetails" --output text)
-        if [ $status == "Success" ] ; then
-          echo "Command executed successfully"
-        else
-          echo "Command failed"
-          echo "Error: $status"
-          exit 1
-        fi
+          ]')
+          echo "$command_id"
+          
