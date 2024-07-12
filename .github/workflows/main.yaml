@@ -59,11 +59,13 @@ jobs:
 
         aws ssm wait command-executed \
           --command-id $command_id \
-          --instance-id i-0c3388316d4f55d42
+          --targets "Key=instanceids,Values =instance-id i-0c3388316d4f55d42,i-0950895252e2d788c"
 
-        status=$(aws ssm list-commands --command-id $command_id --query "Commands[0].StatusDetails" --output text)
         
-        if [ "$status" == "Success" ] ; then
+        status=$(aws ssm list-commands --command-id $command_id --query "Commands[0].Status" --output text)
+
+        
+        if [ $status == "Success" ] ; then
           echo "Command executed successfully"
         else
           echo "Command failed"
