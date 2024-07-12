@@ -57,9 +57,9 @@ jobs:
          --command-id $command_id \
          --instance-id i-07c2aa65dcdb16f9c
 
-         status=$(aws ssm list-commands --command-id $command_id)
+         status=$(aws ssm list-commands --command-id $command_id --querry "Commands[0].StatusDetails" --output text)
           
-         if ["status" == "Sucsess"] ; then
+         if [status == "Sucsess"] ; then
           echo "Command executed successfully"
          else
           echo "command failed"
