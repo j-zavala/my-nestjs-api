@@ -45,7 +45,7 @@ jobs:
       run: |
         command_id=$(aws ssm send-command \
           --document-name "AWS-RunShellScript" \
-          --targets "Key=instanceids,Values=ii-01c5e4a0c5bafdd05,i-02b8566c525cb3b02" \
+          --targets "Key=instanceids,Values=i-01c5e4a0c5bafdd05,i-02b8566c525cb3b02" \
           --comment "Pull Docker image and run it" \
           --parameters 'commands=[
             "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 471112619481.dkr.ecr.us-east-1.amazonaws.com",
