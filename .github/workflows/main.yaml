@@ -10,23 +10,27 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{secrets.AWS_REGION}}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Login to AWS ECR
         id: login-aws-ecr
         uses: aws-actions/amazon-ecr-login@v2
+
       - name: Build and push Docker image to AWS ECR
         env:
           ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}
-          ECR_REPOSITORY: ${{secrets.AWS_ECR_REPO}}
+          ECR_REPOSITORY: ${{ secrets.AWS_ECR_REPO }}
           IMAGE_TAG: latest-ns
         run: |
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
   deploy:
     name: Deploy to EC2 Instance
     runs-on: ubuntu-latest
@@ -56,26 +60,25 @@ jobs:
             --targets "Key=instanceIds,Values=i-0711655ca6d490045" \
             --comment "Pull Docker image and run it" \
             --parameters 'commands=[
-              "aws ecr get-login-password --region secrets.AWS_REGION | docker login --username AWS --password-stdin ${ECR_REGISTRY}",
-              "docker pull ${ECR_REGISTRY}/{{secrets.AWS_ECR_REPO}}:latest-ns",
-              "docker run -p 3000:3000 --name api ${ECR_REGISTRY}/{{secrets.AWS_ECR_REPO }}:latest-ns"
+              "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${ECR_REGISTRY}",
+              "docker pull ${ECR_REGISTRY}/${{ secrets.AWS_ECR_REPO }}:latest-ns",
+              "docker run -p 3000:3000 --name api ${ECR_REGISTRY}/${{ secrets.AWS_ECR_REPO }}:latest-ns"
             ]' --query "Command.CommandId" --output text)
 
           echo $command_id
 
           aws ssm wait command-executed \
-          --command-id $command_id \
-          --instance-id i-0711655ca6d490045 || true 
+            --command-id $command_id \
+            --instance-id i-0711655ca6d490045 || true 
 
           status=$(aws ssm list-commands --command-id $command_id --query "Commands[0].StatusDetails" --output text)
 
           echo "$status"
 
-            if [ $status == "Success" ]; then 
-              echo "Command executed successfully"
-            else
-              
-              echo "Command failed time to get debugging"
-              aws ssm list-command-invocations --command-id $command_id --details
-              exit 1
-            fi
+          if [ "$status" == "Success" ]; then 
+            echo "Command executed successfully"
+          else
+            echo "Command failed time to get debugging"
+            aws ssm list-command-invocations --command-id $command_id --details
+            exit 1
+          fi
