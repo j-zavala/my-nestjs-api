@@ -57,7 +57,7 @@ jobs:
         run: |
           command_id=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
-            --targets "Key=instanceIds,Values=i-0711655ca6d490045" \
+            --targets "Key=instanceIds,Values=i-007857caf670a98ac" \
             --comment "Pull Docker image and run it" \
             --parameters '{"commands": [
               "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-aws-ecr.outputs.registry }}",
@@ -69,7 +69,7 @@ jobs:
 
           aws ssm wait command-executed \
             --command-id $command_id \
-            --instance-id i-0711655ca6d490045 || true 
+            --instance-id i-007857caf670a98ac || true 
 
           status=$(aws ssm list-commands --command-id $command_id --query "Commands[0].StatusDetails" --output text)
 
