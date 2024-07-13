@@ -28,7 +28,9 @@ jobs:
           ECR_REPOSITORY: ${{ secrets.AWS_ECR_REPO }}
           IMAGE_TAG: latest-ns
         run: |
+          echo "Building Docker image..."
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          echo "Pushing Docker image to ECR..."
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
   deploy:
@@ -55,6 +57,7 @@ jobs:
 
       - name: Deploy to EC2 Instance
         run: |
+          echo "Sending command to EC2 instance to pull Docker image and run it..."
           command_id=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=instanceIds,Values=i-007857caf670a98ac" \
@@ -73,11 +76,10 @@ jobs:
 
           echo "Command ID: $command_id"
 
-          # Increase the timeout for the wait command to 30 minutes (1800 seconds)
+          echo "Waiting for command execution to complete..."
           aws ssm wait command-executed \
             --command-id $command_id \
-            --instance-id i-007857caf670a98ac \
-            --timeout 1800 || true 
+            --instance-id i-007857caf670a98ac || true 
 
           status=$(aws ssm list-commands --command-id $command_id --query "Commands[0].StatusDetails" --output text)
 
@@ -87,6 +89,6 @@ jobs:
             echo "Command executed successfully"
           else
             echo "Command failed, time to get debugging information"
-            aws ssm list-command-invocations --command-id $command_id --details
+            aws ssm list-command-invocations --command-id $command_id --details --query "CommandInvocations[0].CommandPlugins[0].Output" --output text
             exit 1
           fi
