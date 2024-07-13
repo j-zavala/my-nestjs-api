@@ -79,7 +79,9 @@ jobs:
               "docker pull ${{ steps.login-aws-ecr.outputs.registry }}/{{ secrets.AWS_ECR_REPO }}:latest",
               "echo \"Pulled latest Docker image\"",
               "docker run -d -p 3000:3000 --name api ${{ steps.login-aws-ecr.outputs.registry }}/{{ secrets.AWS_ECR_REPO }}:latest",
-              "echo \"Started new container\""
+              "echo \"Started new container\"",
+              "docker logs api > /var/log/docker-api-logs.txt",
+              "echo \"Captured logs from the new container\""
             ]' --query "Command.CommandId" --output text)
 
           echo "SSM Command ID: $command_id"
