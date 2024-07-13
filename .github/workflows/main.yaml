@@ -60,18 +60,24 @@ jobs:
             --targets "Key=instanceIds,Values=i-007857caf670a98ac" \
             --comment "Pull Docker image and run it" \
             --parameters '{"commands": [
+              "echo Stopping any existing containers...",
               "docker stop backend || true",
               "docker rm backend || true",
+              "echo Logging into AWS ECR...",
               "aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin ${{ steps.login-aws-ecr.outputs.registry }}",
+              "echo Pulling the latest image...",
               "docker pull ${{ steps.login-aws-ecr.outputs.registry }}/${{ secrets.AWS_ECR_REPO }}:latest-ns",
+              "echo Running the new container...",
               "docker run -p 3000:3000 --name backend ${{ steps.login-aws-ecr.outputs.registry }}/${{ secrets.AWS_ECR_REPO }}:latest-ns"
             ], "executionTimeout":["3600"]}' --query "Command.CommandId" --output text)
 
           echo "Command ID: $command_id"
 
+          # Increase the timeout for the wait command to 30 minutes (1800 seconds)
           aws ssm wait command-executed \
             --command-id $command_id \
-            --instance-id i-007857caf670a98ac || true 
+            --instance-id i-007857caf670a98ac \
+            --timeout 1800 || true 
 
           status=$(aws ssm list-commands --command-id $command_id --query "Commands[0].StatusDetails" --output text)
 
