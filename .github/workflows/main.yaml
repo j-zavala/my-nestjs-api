@@ -64,7 +64,7 @@ jobs:
 
       - name: Deploy to EC2
         run: |
-          instance_id="i-07e0f19c4da663b76"
+          instance_id="i-0222c067af589f83c"
           command_id=$(aws ssm send-command \
             --document-name "AWS-RunShellScript" \
             --targets "Key=instanceIds,Values=$instance_id" \
