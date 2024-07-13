@@ -76,19 +76,27 @@ jobs:
 
           echo "Command ID: $command_id"
 
-          echo "Waiting for command execution to complete..."
-          aws ssm wait command-executed \
-            --command-id $command_id \
-            --instance-id i-007857caf670a98ac || true 
+          # Custom timeout loop
+          timeout=1800
+          interval=30
+          elapsed=0
+          status="InProgress"
 
-          status=$(aws ssm list-commands --command-id $command_id --query "Commands[0].StatusDetails" --output text)
+          while [ $elapsed -lt $timeout ]; do
+            status=$(aws ssm list-commands --command-id $command_id --query "Commands[0].StatusDetails" --output text)
+            echo "Status: $status"
+            if [ "$status" == "Success" ]; then
+              echo "Command executed successfully"
+              exit 0
+            elif [ "$status" == "Failed" ]; then
+              echo "Command failed, time to get debugging information"
+              aws ssm list-command-invocations --command-id $command_id --details --query "CommandInvocations[0].CommandPlugins[0].Output" --output text
+              exit 1
+            fi
+            sleep $interval
+            elapsed=$((elapsed + interval))
+          done
 
-          echo "Status: $status"
-
-          if [ "$status" == "Success" ]; then 
-            echo "Command executed successfully"
-          else
-            echo "Command failed, time to get debugging information"
-            aws ssm list-command-invocations --command-id $command_id --details --query "CommandInvocations[0].CommandPlugins[0].Output" --output text
-            exit 1
-          fi
+          echo "Command timed out after $timeout seconds"
+          aws ssm list-command-invocations --command-id $command_id --details --query "CommandInvocations[0].CommandPlugins[0].Output" --output text
+          exit 1
