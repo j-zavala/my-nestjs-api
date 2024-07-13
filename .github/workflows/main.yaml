@@ -43,6 +43,12 @@ jobs:
         id: login-aws-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
+      - name: Print Environment Variables # New step to log environment variables
+        run: |
+          echo "AWS_REGION: ${{ secrets.AWS_REGION }}"
+          echo "ECR_REGISTRY: ${{ steps.login-aws-ecr.outputs.registry }}"
+          echo "AWS_ECR_REPO: ${{ secrets.AWS_ECR_REPO }}"
+
       - name: Deploy to EC2 Instance
         run: |
           command_id=$(aws ssm send-command \
