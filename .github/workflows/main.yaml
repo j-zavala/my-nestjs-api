@@ -77,8 +77,8 @@ jobs:
           echo "Command ID: $command_id"
 
           # Custom timeout loop
-          timeout=1800
-          interval=30
+          timeout=60
+          interval=5
           elapsed=0
           status="InProgress"
 
