@@ -71,13 +71,18 @@ jobs:
             --comment "Pull Docker image and run it" \
             --parameters commands='[
               "aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin ${{ steps.login-aws-ecr.outputs.registry }}",
+              "echo \"Logged in to AWS ECR\"",
               "docker stop api || true",
+              "echo \"Stopped existing container\"",
               "docker rm -f api || true",
+              "echo \"Removed existing container\"",
               "docker pull ${{ steps.login-aws-ecr.outputs.registry }}/{{ secrets.AWS_ECR_REPO }}:latest",
-              "docker run -d -p 3000:3000 --name api ${{ steps.login-aws-ecr.outputs.registry }}/{{ secrets.AWS_ECR_REPO }}:latest"
+              "echo \"Pulled latest Docker image\"",
+              "docker run -d -p 3000:3000 --name api ${{ steps.login-aws-ecr.outputs.registry }}/{{ secrets.AWS_ECR_REPO }}:latest",
+              "echo \"Started new container\""
             ]' --query "Command.CommandId" --output text)
 
-          echo $command_id
+          echo "SSM Command ID: $command_id"
 
           aws ssm wait command-executed --command-id $command_id --instance-id $instance_id || true 
 
