@@ -74,18 +74,18 @@ jobs:
             --document-name "AWS-RunShellScript" \
             --targets "Key=instanceIds,Values=$instance_id" \
             --comment "Pull Docker image and run it" \
-            --parameters '{"commands": [
-              "aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin '$ecr_registry'",
-              "echo Logged in to AWS ECR",
-              "[[ $(docker ps -aq -f name=api) ]] && docker stop api || echo Container api not running",
-              "[[ $(docker ps -aq -f name=api) ]] && docker rm -f api || echo Container api not found",
-              "docker pull '$image'",
-              "echo Pulled latest Docker image",
-              "docker run -d -p 3000:3000 --name api '$image'",
-              "echo Started new container",
-              "docker logs api > /var/log/docker-api-logs.txt",
-              "echo Captured logs from the new container"
-            ]}' --query "Command.CommandId" --output text)
+            --parameters "{\"commands\": [
+              \"aws ecr get-login-password --region ${{ secrets.AWS_REGION }} | docker login --username AWS --password-stdin $ecr_registry\",
+              \"echo Logged in to AWS ECR\",
+              \"[[ $(docker ps -aq -f name=api) ]] && docker stop api || echo Container api not running\",
+              \"[[ $(docker ps -aq -f name=api) ]] && docker rm -f api || echo Container api not found\",
+              \"docker pull $image\",
+              \"echo Pulled latest Docker image\",
+              \"docker run -d -p 3000:3000 --name api $image\",
+              \"echo Started new container\",
+              \"docker logs api > /var/log/docker-api-logs.txt\",
+              \"echo Captured logs from the new container\"
+            ]}" --query "Command.CommandId" --output text)
 
           echo "SSM Command ID: $command_id"
 
